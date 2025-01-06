@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion des Livres</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Gestion des Livres</h1>
+
+  <!-- Formulaire pour louer un livre -->
+  <div>
+    <h3>Louer un livre</h3>
+    <input type="text" id="livreIdInput" placeholder="ID du livre">
+    <button id="louerButton">Louer</button>
+  </div>
+
+  <!-- Liste des livres disponibles -->
+  <div>
+    <h3>Liste des livres disponibles</h3>
+    <ul id="livresDisponiblesList"></ul>
+  </div>
+
+  <script>
+    // Connexion au serveur Socket.IO
+    const socket = io("http://localhost:3000");
+
+    // Fonction pour afficher la liste des livres disponibles
+    const afficherLivresDisponibles = (livres) => {
+      const livresList = document.getElementById("livresDisponiblesList");
+      livresList.innerHTML = ""; // Efface la liste existante
+
+      // Ajouter chaque livre disponible à la liste
+      livres.forEach((livre) => {
+        const li = document.createElement("li");
+        li.textContent = `${livre.titre} (ID: ${livre._id})`;
+        livresList.appendChild(li);
+      });
+    };
+
+    // Écouter l'événement de mise à jour de la liste des livres disponibles
+    socket.on("updateLivresDisponibles", (livres) => {
+      afficherLivresDisponibles(livres);
+    });
+
+    // Écouter l'événement de succès (louer le livre)
+    socket.on("success", (data) => {
+      alert(data.message);
+    });
+
+    // Gestion du bouton "Louer"
+    const louerButton = document.getElementById("louerButton");
+    louerButton.addEventListener("click", () => {
+      const livreId = document.getElementById("livreIdInput").value;
+
+      // Émettre l'événement de location au serveur
+      if (livreId) {
+        socket.emit("louerLivre", { id: livreId });
+        document.getElementById("livreIdInput").value = ""; // Réinitialiser le champ
+      } else {
+        alert("Veuillez entrer l'ID du livre.");
+      }
+    });
+  </script>
+</body>
+</html>
