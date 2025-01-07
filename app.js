@@ -34,20 +34,20 @@ const io = require("socket.io")(server);
 io.on("connection", (socket) => {
   console.log("Un client est connecté.");
 
-  // Envoyer la liste des livres disponibles au client
+
   const sendLivresDisponibles = async () => {
     const livresDisponibles = await Livre.find({ etat: "disponible" });
     socket.emit("updateLivresDisponibles", livresDisponibles);
   };
 
-  sendLivresDisponibles(); // Envoyer la liste initiale des livres disponibles
+  sendLivresDisponibles();
 
-  // Écouter l'événement "louerLivre"
+
   socket.on("louerLivre", async (data) => {
     const livreId = data.id;
 
     try {
-      // Trouver le livre par ID
+
       const livre = await Livre.findById(livreId);
       if (!livre) {
         return socket.emit("error", { message: "Livre non trouvé." });
@@ -57,20 +57,18 @@ io.on("connection", (socket) => {
         return socket.emit("error", { message: "Ce livre est déjà loué." });
       }
 
-      // Mettre à jour l'état du livre à "loué"
+
       livre.etat = "loué";
       await livre.save();
 
-      // Décrémenter le nombre de livres dans la bibliothèque associée
       const bibliotheque = await Bibliotheque.findById(livre.id_bibliotheque);
       if (bibliotheque) {
         bibliotheque.nbr_livre = Math.max(bibliotheque.nbr_livre - 1, 0);
         await bibliotheque.save();
       }
 
-      // Mettre à jour la liste des livres disponibles pour tous les clients
       const livresDisponibles = await Livre.find({ etat: "disponible" });
-      io.emit("updateLivresDisponibles", livresDisponibles); // Mise à jour pour tous les clients
+      io.emit("updateLivresDisponibles", livresDisponibles);
 
       // Envoyer une confirmation au client
       socket.emit("success", { message: "Livre loué avec succès." });
